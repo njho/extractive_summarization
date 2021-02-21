@@ -1,0 +1,5 @@
+00:00:03,420-->00:00:10,190-->Hey, John and Breton, uh, wanting to send over this screen cap to give you a glimpse into what I've been working on
+00:00:19,065-->00:00:31,085-->So, uh, right here, this is kind of the, kind of more on earth on your side, type of like what we would set up a config to look like, uh, for the API we'd be building for the pre script build
+00:04:05,190-->00:04:15,840-->And so you bring an asset down into like the rotate, uh, um, rotate in composition
+00:04:25,725-->00:04:30,645-->Uh, the final assets, uh, I'm duplicating all of these Lego blocks that we have here
+00:06:23,895-->00:06:26,445-->I don't think that should be too hard of a script to write

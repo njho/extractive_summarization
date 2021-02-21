@@ -1,0 +1,10 @@
+00:00:03,420-->00:00:10,190-->Hey, John and Breton, uh, wanting to send over this screen cap to give you a glimpse into what I've been working on
+00:00:19,065-->00:00:31,085-->So, uh, right here, this is kind of the, kind of more on earth on your side, type of like what we would set up a config to look like, uh, for the API we'd be building for the pre script build
+00:01:26,525-->00:01:28,505-->And length would be the time that we have it on screen
+00:01:39,825-->00:01:45,345-->Very clearly specified what they, uh, need to do, what they would like this thing to look like
+00:02:06,630-->00:02:13,770-->Uh, work, uh, or you could see this scaling up, um, to more complicated templates
+00:03:23,084-->00:03:25,665-->You can change to change the different colors and stuff
+00:04:25,725-->00:04:30,645-->Uh, the final assets, uh, I'm duplicating all of these Lego blocks that we have here
+00:06:05,160-->00:06:07,260-->This is all after effects work at this point
+00:06:23,895-->00:06:26,445-->I don't think that should be too hard of a script to write
+00:06:36,164-->00:06:41,685-->Um, so yeah, more to come, but let's, uh, love to hear your thoughts on all this
