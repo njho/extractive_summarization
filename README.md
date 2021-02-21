@@ -20,12 +20,15 @@ right.
 3
 00:00:03,420 --> 00:00:03,840
 Hey,
-
 ----------- END ------------
 
 Output File format
 The output file will contain a file that will have a list of sentences, each sentence with the start time and end time
 
+--------- START ----------
+00:00:03,420-->00:00:10,190-->Hey, John and Breton, uh, wanting to send over this screen cap to give you a glimpse into what I've been working on
+00:00:19,065-->00:00:31,085-->So, uh, right here, this is kind of the, kind of more on earth on your side, type of like what we would set up a config to look like, uh, for the API we'd be building for the pre script build
+----------- END ------------
 
 Functions: 
 The primary function is the extract() function that takes in the following parameters
