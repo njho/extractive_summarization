@@ -1,3 +1,4 @@
 torch==1.7.0
 spacy==2.3.1
 bert-extractive-summarizer
+pydub==0.24.0
