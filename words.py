@@ -51,7 +51,7 @@ split_transcript_data = []
 words_only = []
 
 
-SAFE_WORDS = ["beep", "", "uh", " "]
+SAFE_WORDS = ["beep", "", "uh", " ", ""]
 
 
 def clean_words(all_words):
@@ -67,45 +67,53 @@ def clean_words(all_words):
     for i in sorted(del_list, reverse=True):
         del all_words[i]
 
-    split_string = t2d.convert(new_string).split(" ")
+    prev_split_string = new_string.split(" ")
+    prev_split_string = [value for value in prev_split_string if value != ""]
+    t2d_split_string = t2d.convert(new_string).split(" ")
 
-    def update_word_list(all_words, split_string):
+    def update_word_list(all_words, prev_split_string, t2d_split_string):
         del_list = []
         update_key = None
         update_word = None
 
-        if len(split_string) != len(all_words):
-            for word_i, word in enumerate(all_words):
-                if word.word != split_string[word_i]:
+        for word_i, word in enumerate(prev_split_string):
+            if word != t2d_split_string[word_i]:
+                print(word, t2d_split_string[word_i])
 
-                    test_word = ""
-                    for i in range(3):
-                        test_word += f" {all_words[word_i + i].word}"
-                        if i == 0:
-                            update_key = word_i
-                        del_list.append(word_i + i)
+                test_word = ""
+                for i in range(3):
+                    test_word += f" {all_words[word_i + i].word}"
+                    if i == 0:
+                        update_key = word_i
+                    del_list.append(word_i + i)
 
-                        if split_string[word_i] == clean_word(t2d.convert(test_word)):
-                            print("Found it at ", i, split_string[word_i], test_word)
-                            update_word = split_string[word_i]
-                            break
-                    break
+                    if t2d_split_string[word_i] == clean_word(t2d.convert(test_word)):
+                        print("Found it at ", i, t2d_split_string[word_i], test_word)
+                        update_word = t2d_split_string[word_i]
+                        break
+                break
 
         for i in sorted(del_list, reverse=True):
             if i != update_key:
+                del prev_split_string[i]
+                del t2d_split_string[i]
                 del all_words[i]
 
         if update_word is not None:
-            all_words[i].word = update_word
-            all_words[i].original_word = update_word
-            all_words[i].altered = True
-            return update_word_list(all_words, split_string)
+            all_words[update_key].word = update_word
+            all_words[update_key].original_word = update_word
+            all_words[update_key].altered = True
+
+            prev_split_string[update_key] = update_word
+            t2d_split_string[update_key] = update_word
+
+            return update_word_list(
+                all_words.copy(), prev_split_string, t2d_split_string
+            )
         else:
             return all_words
 
-    all_words = update_word_list(all_words, split_string)
-
-    def remove_inaudible(all_words): 
+    def remove_inaudible(all_words):
         del_list = []
         for i, word in enumerate(all_words):
             if "inaudible" == word.word:
@@ -114,19 +122,20 @@ def clean_words(all_words):
                 del_list.append(i + 1)
                 break
 
-
-        if len(del_list) ==2: 
+        if len(del_list) == 2:
             for i in sorted(del_list, reverse=True):
                 del all_words[i]
             return remove_inaudible(all_words)
-            
-        else: 
+
+        else:
             return all_words
 
+    all_words = update_word_list(all_words, prev_split_string, t2d_split_string)
+    print("FINAL")
+    print(all_words)
     all_words = remove_inaudible(all_words)
 
-        
-    return split_string
+    return all_words
 
 
 # timed_words = ""
@@ -150,12 +159,11 @@ for i, item in enumerate(rev_data):
             rev_words.append(Word(word))
         # rev_words += split_data[2] + " "
 
+# print(rev_words)
 words_only = clean_words(timed_words)
 rev_words_only = clean_words(rev_words)
-
 # print(f"Rev Words Len: {len(rev_words_only)} vs {len(words_only)}")
-raise Exception
-adjustment = 0
+print(rev_words_only)
 
 
 def count_score(list1, list2):
@@ -200,7 +208,10 @@ matched_sequences = []
 rev_subset = rev_words_only.copy()
 timed_subset = words_only.copy()
 
+rev_subset = [item.word for item in rev_subset]
+timed_subset = [item.word for item in timed_subset]
 prev_rev_subset = None
+
 while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
     print("=" * 100)
     prev_rev_subset = rev_subset.copy()
