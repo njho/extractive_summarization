@@ -317,15 +317,15 @@ import itertools
 
 with open("./output.csv", "w") as f:
     wr = csv.writer(f)
-    wr.writerow(["Transcript", "Timed Words"])
+    wr.writerow(["Timestamp", "Transcript", "Timed Words"])
 
     for sequence in matched_sequences:
         print(sequence)
-        wr.writerow(["====", "===="])
+        wr.writerow(["====", "====", "===="])
 
         thing = list(itertools.zip_longest(sequence[0], sequence[1], fillvalue="-"))
         for item in thing:
-            wr.writerow(item)
+            wr.writerow([item[1].timestamp, item[0], item[1]])
 
 
 def get_ms(string):
