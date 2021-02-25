@@ -3,6 +3,9 @@ import re
 import operator
 from pydub import AudioSegment
 from datetime import timedelta
+from text2digits import text2digits
+
+t2d = text2digits.Text2Digits()
 
 INPUT_FILE = "./test.mp3"
 TRANSCRIPTION_DATA = "./data/podcast__transcription_test_op_10.txt"
@@ -27,38 +30,51 @@ rev_data = rev_data.split("\n")
 split_transcript_data = []
 words_only = []
 
-for i, item in enumerate(transcript_data):
-    split_data = item.split("-->")
-    split_transcript_data.append(split_data)
-    if len(split_data) == 3:
-        words_only.extend(split_data[2].replace("uh", "").replace("  ", " ").split(" "))
-
-split_rev_data = []
-rev_words_only = []
-for i, item in enumerate(rev_data):
-    split_data = item.split("                                             ")
-    split_rev_data.append(split_data)
-    if len(split_data) == 3:
-        rev_words_only.extend(
-            split_data[2]
-            .replace("\\", "")
-            .replace("uh", "")
-            .replace("  ", " ")
-            .split(" ")
-        )
-
 
 def clean_word(word):
     word = re.sub("[^a-z0-9A-Z ]+", "", word)
     return word.lower()
 
 
-words_only = [clean_word(item) for item in words_only]
-rev_words_only = [clean_word(item) for item in rev_words_only]
+SAFE_WORDS = ["beep", "", "uh", " "]
 
 
-# print(words_only[0:30])
-# print(rev_words_only[0:30])
+def clean_and_split_str(string):
+    new_string = ""
+    split_string = string.split(" ")
+
+    for word in split_string:
+        word = clean_word(word)
+        if word in SAFE_WORDS:
+            continue
+        new_string += word + " "
+
+    split_string = t2d.convert(new_string).split(" ")
+
+    if "inaudible" in split_string:
+        inaudible_index = split_string.index("inaudible")
+        del split_string[inaudible_index + 1]
+        del split_string[inaudible_index]
+
+    return split_string
+
+
+timed_words = ""
+for i, item in enumerate(transcript_data):
+    split_data = item.split("-->")
+    split_transcript_data.append(split_data)
+    if len(split_data) == 3:
+        timed_words += split_data[2] + " "
+
+
+rev_words = ""
+for i, item in enumerate(rev_data):
+    split_data = item.split("                                             ")
+    if len(split_data) == 3:
+        rev_words += split_data[2] + " "
+
+words_only = clean_and_split_str(timed_words)
+rev_words_only = clean_and_split_str(rev_words)
 
 print(f"Rev Words Len: {len(rev_words_only)} vs {len(words_only)}")
 
@@ -107,9 +123,10 @@ matched_sequences = []
 rev_subset = rev_words_only.copy()
 timed_subset = words_only.copy()
 
-prev_set = None
-while len(rev_subset) > 0:
+prev_rev_subset = None
+while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
     print("=" * 100)
+    prev_rev_subset = rev_subset.copy()
 
     for i, word in enumerate(rev_subset):
         if len(timed_subset) > i:
@@ -197,13 +214,11 @@ while len(rev_subset) > 0:
 
             break
 
-    if prev_set == rev_subset:
-        matched_sequences.append([rev_subset, timed_subset])
-        rev_subset = []
-        timed_subset = []
-        prev_word = word
+matched_sequences.append([rev_subset, timed_subset])
+rev_subset = []
+timed_subset = []
+prev_word = word
 
-        break
 
 import csv
 import itertools
