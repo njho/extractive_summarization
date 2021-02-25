@@ -59,7 +59,6 @@ def clean_words(all_words):
     del_list = []
     for i, word in enumerate(all_words):
         if word.word in SAFE_WORDS:
-            print(f"Found Safe Word: {word.word}")
             del_list.append(i)
             continue
         new_string += word.word + " "
@@ -78,7 +77,6 @@ def clean_words(all_words):
 
         for word_i, word in enumerate(prev_split_string):
             if word != t2d_split_string[word_i]:
-                print(word, t2d_split_string[word_i])
 
                 test_word = ""
                 for i in range(3):
@@ -88,7 +86,6 @@ def clean_words(all_words):
                     del_list.append(word_i + i)
 
                     if t2d_split_string[word_i] == clean_word(t2d.convert(test_word)):
-                        print("Found it at ", i, t2d_split_string[word_i], test_word)
                         update_word = t2d_split_string[word_i]
                         break
                 break
@@ -117,7 +114,7 @@ def clean_words(all_words):
         del_list = []
         for i, word in enumerate(all_words):
             if "inaudible" == word.word:
-                print("Found inaudible")
+                # print("Found inaudible")
                 del_list.append(i)
                 del_list.append(i + 1)
                 break
@@ -131,8 +128,6 @@ def clean_words(all_words):
             return all_words
 
     all_words = update_word_list(all_words, prev_split_string, t2d_split_string)
-    print("FINAL")
-    print(all_words)
     all_words = remove_inaudible(all_words)
 
     return all_words
@@ -163,7 +158,6 @@ for i, item in enumerate(rev_data):
 words_only = clean_words(timed_words)
 rev_words_only = clean_words(rev_words)
 # print(f"Rev Words Len: {len(rev_words_only)} vs {len(words_only)}")
-print(rev_words_only)
 
 
 def count_score(list1, list2):
@@ -212,19 +206,35 @@ matched_sequences = []
 
 rev_subset = rev_words_only.copy()
 timed_subset = words_only.copy()
+# for i, word in enumerate(rev_subset):
+#     if word.word == "100000":
+#         print(i)
+
+# for i, word in enumerate(timed_subset):
+#     if word.word == "month":
+#         print(i)
+
+# rev_subset = rev_subset[122:]
+# timed_subset = timed_subset[136:]
+
+# print("Prev Rev Subset")
+# print(rev_subset)
+# print("Prev Timed Subset")
+# print(timed_subset)
 
 prev_rev_subset = None
+prev_shifted_right = False
 
-while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
-    print("=" * 100)
+while len(rev_subset) > 0 and (prev_rev_subset != rev_subset or prev_shifted_right):
+
     prev_rev_subset = rev_subset.copy()
 
     for i, word in enumerate(rev_subset):
         word = word.word
         if len(timed_subset) > i:
-            other_word = timed_subset[i].word
+            other_word = None if timed_subset[i] is None else timed_subset[i].word
             if other_word != word:
-                RIGHT_SHIFT_CNT = 13
+                RIGHT_SHIFT_CNT = 7
                 prev_rev_words = timed_subset[i - 10 : i]
                 prev_timed_words = timed_subset[i - 10 : i]
                 future_timed_words = timed_subset[i : i + RIGHT_SHIFT_CNT]
@@ -256,7 +266,6 @@ while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
                     print("Pushing right Sequence")
                     print([])
                     print(timed_subset[0 : i + shift_key])
-                    matched_sequences.append("From Right")
                     matched_sequences.append(
                         [[], timed_subset[0 : i + shift_key].copy()]
                     )
@@ -265,6 +274,9 @@ while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
                     rev_subset = rev_subset[i:]
                     for i in range(shift_key):
                         timed_subset.insert(0, None)
+
+                    # Important because the prev_reev_data will not be reset
+                    prev_shifted_right = True
 
                 elif shift_key < 0:
                     print(f"Found a shift left with {shift_key} and score: {score}")
@@ -279,6 +291,8 @@ while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
                     rev_subset = rev_subset[i:]
                     timed_subset = timed_subset[i - shift_key :]
 
+                    # Important because the prev_reev_data will not be reset
+                    prev_shifted_right = False
                 else:
                     print("Key is likely 0 ")
                     matched_sequences.append(
@@ -289,16 +303,20 @@ while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
                     rev_subset = rev_subset[i + 1 :]
                     timed_subset = timed_subset[i + 1 :]
 
+                    prev_shifted_right = False
+
                 print()
                 print("=" * 10)
-                print("Adjusted")
+                print("Adjusted Rev Subset")
                 print(rev_subset)
+                print("Adjusted Timed Subset")
                 print(timed_subset)
-                print(f"Finished with {i} and last_match")
-
+                print()
+                print(prev_rev_subset)
                 break
 
         else:
+            print("prev_rev_subset == rev_subset")
             matched_sequences.append([rev_subset, timed_subset])
             rev_subset = []
             timed_subset = []
@@ -312,6 +330,7 @@ timed_subset = []
 prev_word = word
 
 
+print("==" * 200)
 import csv
 import itertools
 
@@ -324,8 +343,19 @@ with open("./output.csv", "w") as f:
         wr.writerow(["====", "====", "===="])
 
         thing = list(itertools.zip_longest(sequence[0], sequence[1], fillvalue="-"))
+
         for item in thing:
-            wr.writerow([item[1].timestamp, item[0], item[1]])
+            if isinstance(item[1], str) or item[1] is None:
+                wr.writerow([item[0], item[1]])
+            else:
+                wr.writerow([item[1].timestamp, item[0], item[1]])
+
+
+with open("./srt.srt", "w") as wr:
+    for sequence in matched_sequences:
+        thing = list(itertools.zip_longest(sequence[0], sequence[1], fillvalue="-"))
+        for item in thing:
+            wr.write(f"{item[1].timestamp} {item[0].original_word}\n")
 
 
 def get_ms(string):
