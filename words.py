@@ -21,6 +21,26 @@ def read_from_file(file_path, json=True):
             return val
 
 
+class Word:
+    def __init__(self, word, timestamp=None):
+        self.original_word = word
+        self.word = clean_word(word)
+        self.timestamp = timestamp
+        self.del_me = False
+
+    def srt(self):
+        return self.timestamp + self.original_word
+
+    def __repr__(self):
+        return self.word
+
+
+def clean_word(word):
+    word = re.sub("[^a-z0-9A-Z ]+", "", word)
+    word = word.replace(" ", "")
+    return word.lower()
+
+
 transcript_data = read_from_file(TRANSCRIPTION_DATA, json=False)
 transcript_data = transcript_data.split("\n")
 
@@ -31,53 +51,110 @@ split_transcript_data = []
 words_only = []
 
 
-def clean_word(word):
-    word = re.sub("[^a-z0-9A-Z ]+", "", word)
-    return word.lower()
-
-
 SAFE_WORDS = ["beep", "", "uh", " "]
 
 
-def clean_and_split_str(string):
+def clean_words(all_words):
     new_string = ""
-    split_string = string.split(" ")
-
-    for word in split_string:
-        word = clean_word(word)
-        if word in SAFE_WORDS:
+    del_list = []
+    for i, word in enumerate(all_words):
+        if word.word in SAFE_WORDS:
+            print(f"Found Safe Word: {word.word}")
+            del_list.append(i)
             continue
-        new_string += word + " "
+        new_string += word.word + " "
+
+    for i in sorted(del_list, reverse=True):
+        del all_words[i]
 
     split_string = t2d.convert(new_string).split(" ")
 
-    if "inaudible" in split_string:
-        inaudible_index = split_string.index("inaudible")
-        del split_string[inaudible_index + 1]
-        del split_string[inaudible_index]
+    def update_word_list(all_words, split_string):
+        del_list = []
+        update_key = None
+        update_word = None
 
+        if len(split_string) != len(all_words):
+            for word_i, word in enumerate(all_words):
+                if word.word != split_string[word_i]:
+
+                    test_word = ""
+                    for i in range(3):
+                        test_word += f" {all_words[word_i + i].word}"
+                        if i == 0:
+                            update_key = word_i
+                        del_list.append(word_i + i)
+
+                        if split_string[word_i] == clean_word(t2d.convert(test_word)):
+                            print("Found it at ", i, split_string[word_i], test_word)
+                            update_word = split_string[word_i]
+                            break
+                    break
+
+        for i in sorted(del_list, reverse=True):
+            if i != update_key:
+                del all_words[i]
+
+        if update_word is not None:
+            all_words[i].word = update_word
+            all_words[i].original_word = update_word
+            all_words[i].altered = True
+            return update_word_list(all_words, split_string)
+        else:
+            return all_words
+
+    all_words = update_word_list(all_words, split_string)
+
+    def remove_inaudible(all_words): 
+        del_list = []
+        for i, word in enumerate(all_words):
+            if "inaudible" == word.word:
+                print("Found inaudible")
+                del_list.append(i)
+                del_list.append(i + 1)
+                break
+
+
+        if len(del_list) ==2: 
+            for i in sorted(del_list, reverse=True):
+                del all_words[i]
+            return remove_inaudible(all_words)
+            
+        else: 
+            return all_words
+
+    all_words = remove_inaudible(all_words)
+
+        
     return split_string
 
 
-timed_words = ""
+# timed_words = ""
+timed_words = []
 for i, item in enumerate(transcript_data):
     split_data = item.split("-->")
     split_transcript_data.append(split_data)
+
     if len(split_data) == 3:
-        timed_words += split_data[2] + " "
+        word = Word(split_data[2], f"{split_data[0]}-->{split_data[1]}")
+        timed_words.append(word)
+        # timed_words += split_data[2] + " "
 
 
-rev_words = ""
+# rev_words = ""
+rev_words = []
 for i, item in enumerate(rev_data):
     split_data = item.split("                                             ")
     if len(split_data) == 3:
-        rev_words += split_data[2] + " "
+        for word in split_data[2].split(" "):
+            rev_words.append(Word(word))
+        # rev_words += split_data[2] + " "
 
-words_only = clean_and_split_str(timed_words)
-rev_words_only = clean_and_split_str(rev_words)
+words_only = clean_words(timed_words)
+rev_words_only = clean_words(rev_words)
 
-print(f"Rev Words Len: {len(rev_words_only)} vs {len(words_only)}")
-
+# print(f"Rev Words Len: {len(rev_words_only)} vs {len(words_only)}")
+raise Exception
 adjustment = 0
 
 
