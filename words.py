@@ -172,7 +172,12 @@ def count_score(list1, list2):
     """
     score = 0
     for i, wrd in enumerate(list1):
-        if i < len(list2) and wrd == list2[i]:
+        if (
+            i < len(list2)
+            and wrd is not None
+            and list2[i] is not None
+            and wrd.word == list2[i].word
+        ):
             score += 1
     return score
 
@@ -208,8 +213,6 @@ matched_sequences = []
 rev_subset = rev_words_only.copy()
 timed_subset = words_only.copy()
 
-rev_subset = [item.word for item in rev_subset]
-timed_subset = [item.word for item in timed_subset]
 prev_rev_subset = None
 
 while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
@@ -217,8 +220,9 @@ while len(rev_subset) > 0 and prev_rev_subset != rev_subset:
     prev_rev_subset = rev_subset.copy()
 
     for i, word in enumerate(rev_subset):
+        word = word.word
         if len(timed_subset) > i:
-            other_word = timed_subset[i]
+            other_word = timed_subset[i].word
             if other_word != word:
                 RIGHT_SHIFT_CNT = 13
                 prev_rev_words = timed_subset[i - 10 : i]
